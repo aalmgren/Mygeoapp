@@ -1,0 +1,55 @@
+.knowledge-container { margin-top: 40px; padding: 20px; background: #f5f5f5; border-radius: 8px; }
+.brace { fill: none; stroke: #666; stroke-width: 2px; }
+.deposit-card rect { fill: white; stroke: #2196F3; stroke-width: 2px; rx: 6; ry: 6; }
+.deposit-card text { font-size: 12px; fill: #333; }
+.deposit-card .title { font-weight: bold; font-size: 14px; fill: #2196F3; }
+.knowledge-card.observation { stroke: #4CAF50; }
+.knowledge-card.primary_inference { stroke: #2196F3; stroke-width: 2px; }
+.knowledge-card.implication { stroke: #FF9800; }
+.knowledge-card.recommendation { stroke: #9C27B0; stroke-width: 2px; }
+.knowledge-link { fill: none; stroke: #999; stroke-width: 2px; stroke-dasharray: 4; }
+.knowledge-text { font-size: 12px; fill: #333; }
+.knowledge-title { font-weight: bold; font-size: 14px; }
+body { font-family: Arial, sans-serif; background: #fafafa; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+h2 { text-align: center; padding: 10px; margin: 0; border-bottom: 1px solid #ddd; }
+#tree-svg { width: 100%; flex: 1; display: block; }
+#knowledge-svg { display: none; }
+.node circle { fill: #4CAF50; stroke: #2e7d32; stroke-width: 2px; r: 6; }
+.node text { font-size: 10px; text-anchor: start; fill: #333; transform: translate(8px, 3px); }
+.tooltip {
+  position: absolute;
+  padding: 10px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  pointer-events: none;
+  font-size: 14px;
+  max-width: 400px;
+  opacity: 0;
+  transition: opacity .3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.inference-node rect {
+  transition: all 0.3s ease;
+}
+
+.inference-node:hover rect {
+  fill: #bbdefb;
+  stroke-dasharray: none;
+}
+
+.inference-link {
+  fill: none;
+  stroke: #2196F3;
+  stroke-width: 2px;
+  stroke-dasharray: 5,5;
+  pointer-events: none;
+}
+.card rect { fill: #fff; stroke: #777; stroke-width: 1px; rx: 6; ry: 6; }
+.card text { font-size: 11px; fill: #333; }
+.link { fill: none; stroke: #999; stroke-width: 2px; }
+.inference-link { fill: none; stroke: #2196F3; stroke-width: 2px; stroke-dasharray: 5,5; pointer-events: none; opacity: .8; }
+.inference-node rect { fill: white; stroke: #2196F3; stroke-width: 2px; rx: 6; }
+.inference-node text { font-size: 12px; fill: #2196F3; font-weight: bold; }
+

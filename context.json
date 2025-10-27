@@ -1,0 +1,398 @@
+{
+  "display_order": ["collar", "survey", "assay", "lithology"],
+  "collar": {
+    "x": {
+      "column": "XCOLLAR",
+      "render_type": "stats_summary",
+      "stats": {"mean": 345650.42, "median": 345640.00, "max": 345800.00, "min": 345500.00, "cv": 0.03}
+    },
+    "y": {
+      "column": "YCOLLAR",
+      "render_type": "stats_summary",
+      "stats": {"mean": 7345600.00, "median": 7345590.00, "max": 7345750.00, "min": 7345450.00, "cv": 0.02}
+    },
+    "z": {
+      "column": "ZCOLLAR",
+      "render_type": "stats_summary",
+      "stats": {"mean": 1258.9, "median": 1259.2, "max": 1272.6, "min": -5.7, "cv": 0.01}
+    },
+    "hole_id": {
+      "column": "BHID",
+      "render_type": "simple_value",
+      "value": "DDH-023A"
+    },
+    "depth": {
+      "column": "DEPTH",
+      "render_type": "stats_summary",
+      "stats": {"mean": 285.3, "median": 280.0, "max": 450.0, "min": 120.5, "cv": 0.35}
+    },
+    "diameter": {
+      "column": "DIAM",
+      "render_type": "distribution",
+      "distribution": {
+        "HQ": 70,
+        "BQ": 30
+      }
+    },
+    "drill_type": {
+      "column": "DTYPE",
+      "render_type": "pie_chart",
+      "distribution": {
+        "DDH": 50,
+        "RC": 50
+      }
+    }
+  },
+  "survey": {
+    "at": {
+      "column": "AT",
+      "render_type": "stats_summary",
+      "stats": {"mean": 142.5, "median": 135.0, "max": 450.0, "min": 0.0, "cv": 0.68}
+    },
+    "dip": {
+      "column": "DIP",
+      "render_type": "stats_summary",
+      "stats": {"mean": -68.2, "median": -70.0, "max": -45.0, "min": -88.5, "cv": 0.15}
+    },
+    "azimuth": {
+      "column": "BRG",
+      "render_type": "stats_summary",
+      "stats": {"mean": 185.3, "median": 180.0, "max": 359.0, "min": 0.0, "cv": 0.42}
+    }
+  },
+  "assay": {
+    "elements": {
+      "Ni": {
+        "column": "NI_PCT",
+        "render_type": "stats_summary",
+        "stats": {"mean": 0.92, "median": 0.91, "max": 1.10, "min": 0.65, "cv": 3.6}
+      },
+      "Si": {
+        "column": "SI_PCT",
+        "render_type": "stats_summary",
+        "stats": {"mean": 45.2, "median": 45.0, "max": 48.3, "min": 42.1, "cv": 0.25}
+      },
+      "Mg": {
+        "column": "MG_PCT",
+        "render_type": "stats_summary",
+        "stats": {"mean": 2.8, "median": 2.7, "max": 3.2, "min": 2.1, "cv": 0.22}
+      }
+    }
+  },
+  "lithology": {
+    "LITO": {
+      "column": "LITO",
+      "render_type": "distribution",
+      "distribution": {
+        "Laterite": 45,
+        "Saprolite": 30,
+        "Bedrock": 15,
+        "Transition": 7,
+        "Limonite": 3
+      }
+    }
+  },
+  "data_nodes": {
+    "coordinates": {
+      "x": { "column": "XCOLLAR", "type": "numeric" },
+      "y": { "column": "YCOLLAR", "type": "numeric" },
+      "z": { "column": "ZCOLLAR", "type": "numeric" }
+  },
+  "assay": {
+      "ni": { "column": "NI_PCT", "type": "numeric" },
+      "qaqc": { "column": "QAQC", "type": "categorical", "values": ["YES", "NO"], "distribution": {"YES": 60, "NO": 40} }
+    },
+    "geology": {
+      "lito": { "column": "LITO", "type": "categorical" },
+      "weathering": { "column": "WEATH", "type": "categorical" }
+    },
+    "drilling": {
+      "diameter": { "column": "DIAM", "type": "categorical", "values": ["HQ", "BQ", "RC"], "distribution": {"HQ": 50, "BQ": 20, "RC": 30} },
+      "dip": { "column": "DIP", "type": "numeric" },
+      "azimuth": { "column": "BRG", "type": "numeric" }
+    }
+  },
+  "inferences": {
+    "data_spacing": {
+      "type": "inference",
+      "title": "Data Spacing Analysis",
+      "sources": ["data_nodes.coordinates.x", "data_nodes.coordinates.y", "data_nodes.coordinates.z"],
+      "evidence": {
+        "observations": [
+          "Nearest neighbor distance < 5m",
+          "Clustering detected in sample distribution"
+        ]
+      },
+      "implications": [
+        "High density of samples in clusters",
+        "Potential bias in grade distribution",
+        "Risk of overweighting clustered areas"
+      ],
+      "recommendations": [
+        "Implement cell-based declustering",
+        "Analyze spatial distribution patterns",
+        "Consider impact on resource estimation"
+      ],
+      "metadata": {
+        "category": "spatial_analysis",
+        "priority": "high",
+        "impact": ["resource_estimation", "grade_distribution"]
+      }
+    },
+    "qaqc_analysis": {
+      "type": "inference",
+      "title": "QAQC Coverage Analysis",
+      "sources": ["data_nodes.assay.qaqc"],
+      "evidence": {
+        "observations": [
+          "QAQC coverage < 70%",
+          "Large areas without control samples"
+        ],
+        "measurements": {
+          "no_qaqc_percentage": "> 30%"
+        }
+      },
+      "implications": [
+        "Low reliability in uncontrolled areas",
+        "Increased uncertainty in grade estimates",
+        "Risk of undetected bias"
+      ],
+      "recommendations": [
+        "Apply classification downgrade in areas without QAQC",
+        "Implement additional control sampling",
+        "Document impact on resource confidence"
+      ],
+      "metadata": {
+        "category": "quality_control",
+        "priority": "high",
+        "impact": ["resource_classification"]
+      }
+    },
+    "contact_analysis": {
+      "type": "inference",
+      "title": "Geological Contact Analysis",
+      "sources": ["data_nodes.geology.lito", "data_nodes.assay.ni"],
+      "evidence": {
+        "observations": [
+          "Sharp grade changes at contacts",
+          "Strong lithological control"
+        ],
+        "measurements": {
+          "grade_change": "> 50% within 5m"
+        }
+      },
+      "implications": [
+        "Sharp geological boundaries",
+        "Strong grade discontinuity",
+        "Domain control by lithology"
+      ],
+      "recommendations": [
+        "Establish hard boundaries between lithotypes",
+        "Use contact plots for validation",
+        "Consider separate estimation domains"
+      ],
+      "metadata": {
+        "category": "geological_boundary",
+        "priority": "high",
+        "impact": ["estimation_strategy", "domain_modeling"]
+      }
+    },
+    "underground": {
+      "type": "inference",
+      "title": "Underground Drilling",
+      "sources": ["collar.z", "survey.dip"],
+      "evidence": {
+        "z": "Negative values",
+        "dip": "Positive values"
+      },
+      "implications": [
+        "Deep underground mine",
+        "Drilling from underground galleries",
+        "Coordinate transformation required"
+      ],
+      "recommendations": [
+        "Transform coordinates to local system",
+        "Review drilling procedures for underground context",
+        "Validate depth measurements"
+      ]
+    },
+    "ni_lateritico": {
+      "type": "inference",
+      "title": "Lateritic Ni",
+      "sources": ["assay.elements.Ni", "assay.elements.Si", "assay.elements.Mg", "lithology.LITO"],
+      "evidence": {
+        "assemblage": "Ni + Si + Mg",
+        "lithology": "Laterite",
+        "mineralization": "Horizontal",
+        "ranking": "Lateritic Ni (65%), Sulfide Ni (20%), Magmatic Ni-Cu (10%), Hydrothermal Ni-Co (5%)"
+      },
+      "implications": [
+        "Typical lateritic nickel deposit",
+        "Weathering-related enrichment",
+        "Horizontal stratification expected"
+      ],
+      "recommendations": [
+        "Define domains as horizontal layers",
+        "Focus exploration on saprolite zone",
+        "Consider limonite vs saprolite separate estimation"
+      ]
+    },
+    "variograma": {
+      "type": "inference",
+      "title": "Strong Anisotropy Variogram",
+      "sources": ["inferences.ni_lateritico"],
+      "evidence": {
+        "deposit_type": "Lateritic Ni",
+        "mineralization": "Horizontal layers"
+      },
+      "implications": [
+        "Preferential horizontal continuity",
+        "Anisotropy ratio > 3:1 (H:V)",
+        "Longer range in horizontal plane"
+      ],
+      "recommendations": [
+        "Model variogram with strong anisotropy",
+        "Use different ranges for horizontal vs vertical",
+        "Validate anisotropy ratio with contact analysis"
+      ]
+    },
+    "krigagem": {
+      "type": "inference",
+      "title": "Anisotropic Kriging in Z",
+      "sources": ["inferences.variograma"],
+      "evidence": {
+        "anisotropy": "Strong horizontal continuity",
+        "ratio": "> 3:1 (H:V)"
+      },
+      "implications": [
+        "Standard isotropic search will oversmooth",
+        "Vertical mixing of different horizons",
+        "Need for anisotropic ellipsoid"
+      ],
+      "recommendations": [
+        "Use flattened search ellipsoid",
+        "Set larger search radius in horizontal plane",
+        "Match anisotropy ratio with variogram",
+        "Consider octant search for better vertical control"
+      ]
+    },
+    "capping": {
+      "type": "inference",
+      "title": "Capping",
+      "sources": ["assay.elements.Ni"],
+      "evidence": {
+        "CV": "> 3",
+        "outliers": "Present in dataset"
+      },
+      "implications": [
+        "High grade variability",
+        "Possible local bias in estimation",
+        "Risk of overestimation in kriging"
+      ],
+      "recommendations": [
+        "Identify and validate high-grade outliers",
+        "Apply top-cut if confirmed",
+        "Evaluate change of support effect",
+        "Document impact on resource estimate"
+      ]
+    },
+    "decluster": {
+      "type": "inference",
+      "title": "Decluster",
+      "sources": ["collar.diameter"],
+      "evidence": {
+        "diameters": "Mix of HQ (70%), BQ (30%)",
+        "support": "Different sample volumes"
+      },
+      "implications": [
+        "Sample support varies by drill type",
+        "Potential sampling bias",
+        "Need for support adjustment"
+      ],
+      "recommendations": [
+        "Calculate declustering weights",
+        "Analyze grade distribution by sample type",
+        "Consider change of support modeling",
+        "Separate statistics by drill type"
+      ]
+    },
+    "trend_vertical": {
+      "type": "inference",
+      "title": "Vertical Trend",
+      "sources": ["inferences.ni_lateritico", "assay.elements.Ni"],
+      "evidence": {
+        "deposit_type": "Lateritic",
+        "grades": "Ni > 0.65%"
+      },
+      "implications": [
+        "Gradual grade decrease with depth expected",
+        "Possible barren weathering cap at top",
+        "Higher enrichment in transition zone",
+        "Vertical zonation typical of laterites"
+      ],
+      "recommendations": [
+        "Perform bench-level grade analysis",
+        "Define top contact (weathering cap)",
+        "Identify and model enrichment zone",
+        "Consider de-trending before variography"
+      ]
+    }
+  },
+  "knowledge_graph": {
+    "discoveries": [
+      {
+        "id": "spatial_distribution",
+        "type": "observation",
+        "title": "Spatial Distribution",
+        "content": "Predominantly horizontal mineralization",
+        "source": ["collar.z"],
+        "x": 100, "y": 50,
+        "expandable": true,
+        "children": [
+          {
+            "id": "underground_potential",
+            "type": "inference",
+            "title": "Underground Potential",
+            "content": "Possible depth extension",
+            "evidence": "Negative Z detected"
+          }
+        ]
+      },
+      {
+        "id": "mineral_assemblage",
+        "type": "observation",
+        "title": "Mineral Assemblage",
+        "content": "Ni + Si + Mg",
+        "source": ["assay.elements.Ni", "assay.elements.Si", "assay.elements.Mg"],
+        "x": 300, "y": 50,
+        "expandable": true,
+        "children": [
+          {
+            "id": "deposit_classification",
+            "type": "inference",
+            "title": "Classification",
+            "content": "Lateritic deposit characteristics"
+          }
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "from": "spatial_distribution",
+        "to": "mineral_assemblage",
+        "type": "leads_to",
+        "inference": {
+          "id": "deposit_model",
+          "type": "conclusion",
+          "title": "Deposit Model",
+          "content": "Nickeliferous Laterite",
+          "implications": [
+            "Domains as horizontal layers",
+            "Variography with strong horizontal anisotropy",
+            "Kriging with flattened ellipsoid"
+          ]
+        }
+      }
+    ]
+  }
+}
