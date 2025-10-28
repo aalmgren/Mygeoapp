@@ -42,6 +42,15 @@ function buildTreeFromNodes(dataNodes, inferences) {
                 result: String(node.value)
             })
         };
+        
+        // LOG para debug
+        if (['x', 'y', 'z'].includes(parts[parts.length - 1])) {
+            console.log(`🔍 Creating node ${node.id}:`, {
+                hasStats: !!node.stats,
+                stats: node.stats,
+                result: treeNode.result
+            });
+        }
 
         // Adicionar nó ao mapa
         nodesByPath.set(node.id, treeNode);
@@ -175,6 +184,8 @@ function buildTreeFromNodes(dataNodes, inferences) {
 }
 
 function formatStats(stats) {
+    console.log('📊 formatStats input:', stats, typeof stats);
+    
     // Ordem específica das estatísticas
     const order = ['mean', 'median', 'max', 'min', 'cv'];
     
@@ -191,15 +202,20 @@ function formatStats(stats) {
     if (typeof stats === 'string') {
         try {
             stats = JSON.parse(stats);
+            console.log('✅ Parsed stats from string:', stats);
         } catch (e) {
-            console.warn('Failed to parse stats:', e);
+            console.warn('❌ Failed to parse stats:', e);
             return stats;
         }
     }
-    return order
+    
+    const result = order
         .filter(key => key in stats)
         .map(key => `${labels[key]}: ${stats[key]}`)
         .join('<br>');
+    
+    console.log('📈 formatStats output:', result);
+    return result;
 }
 
 function formatDistribution(distribution) {
