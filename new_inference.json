@@ -1,0 +1,21 @@
+{
+  "id": "test_inference",
+  "title": "Test Inference",
+  "evidence": {
+    "key1": "value1",
+    "key2": "value2"
+  },
+  "implications": [
+    "Implication 1",
+    "Implication 2"
+  ],
+  "recommendations": [
+    "Recommendation 1",
+    "Recommendation 2"
+  ],
+  "sources": [
+    "collar.x",
+    "collar.y"
+  ],
+  "targets": []
+}
