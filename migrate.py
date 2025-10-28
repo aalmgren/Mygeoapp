@@ -6,6 +6,7 @@ import logging
 from migrations.m001_initial_structure import InitialStructureMigration
 from migrations.m002_inferences import InferencesMigration
 from migrations.m003_workflow_pipeline import WorkflowPipelineMigration
+from migrations.m004_knowledge_web import KnowledgeWebMigration
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,7 +15,8 @@ logger = logging.getLogger(__name__)
 MIGRATIONS = [
     InitialStructureMigration(),
     InferencesMigration(),
-    WorkflowPipelineMigration()
+    WorkflowPipelineMigration(),
+    KnowledgeWebMigration()
 ]
 
 def run_migrations():

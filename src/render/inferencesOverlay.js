@@ -23,12 +23,12 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
     return;
   }
 
-  // Collision detection constants
-  const MIN_DISTANCE = 100;
+  // Collision detection constants - DENSE BEANSTALK LAYOUT
+  const MIN_DISTANCE = 35;
   const CARD_WIDTH = 120;
   const CARD_HEIGHT = 40;
   const MAX_ATTEMPTS = 50;
-  const VERTICAL_SPACING = 120;
+  const VERTICAL_SPACING = 60; // Crescimento vertical compacto
 
   // Helper: find node by path
   const byPath = (path) => {
@@ -120,22 +120,24 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
         return;
       }
 
-    // Calculate initial position based on inference type and level
-    let avgX = sourceNodes.reduce((sum, n) => sum + n.x, 0) / sourceNodes.length;
-    const maxY = Math.max(...sourceNodes.map((n) => n.y));
-    
-    // Determine inference level (how many steps from raw data)
-    let level = 1;
-    if (inference.sources.some(s => s.startsWith('inferences.'))) {
-      level = 2; // Inferência baseada em outra inferência
-    }
-    if (inference.id === 'krigagem' || inference.id === 'trend_vertical') {
-      level = 3; // Inferências finais
-    }
-    
-    // Adjust position based on level and type
-    const levelOffset = level * VERTICAL_SPACING;
-    let xOffset = 0;
+            // Calculate initial position based on inference type and level
+            // BEANSTALK STYLE: Grow UPWARDS (negative Y)
+            let avgX = sourceNodes.reduce((sum, n) => sum + n.x, 0) / sourceNodes.length;
+            const minY = Math.min(...sourceNodes.map((n) => n.y)); // Pegar Y MÍNIMO para crescer para cima
+            
+            // Determine inference level (how many steps from raw data)
+            let level = 1;
+            if (inference.sources.some(s => s.startsWith('inferences.'))) {
+              level = 2; // Inferência baseada em outra inferência
+            }
+            if (inference.id === 'krigagem' || inference.id === 'trend_vertical') {
+              level = 3; // Inferências finais
+            }
+            
+            // Adjust position based on level and type
+            // NEGATIVE offset = UPWARDS growth!
+            const levelOffset = level * VERTICAL_SPACING;
+            let xOffset = 0;
     
     // Specific positioning rules
     switch (inference.id) {
@@ -164,9 +166,9 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
         xOffset = 180;
         break;
     }
-    
-    const initialX = avgX + xOffset;
-    const initialY = maxY + levelOffset;
+            
+            const initialX = avgX + xOffset;
+            const initialY = minY - levelOffset; // SUBTRAIR para crescer PARA CIMA
 
     // Find collision-free position
     const position = findCollisionFreePosition(initialX, initialY, [
@@ -269,17 +271,8 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
       .ease(d3.easeBackOut.overshoot(1.2))
       .attr('r', 8);
 
-    // Add text (label)
-    nodeGroup.append('text')
-      .attr('dy', -15)
-      .attr('text-anchor', 'middle')
-      .style('fill', '#333')
-      .style('font-size', '12px')
-      .style('opacity', 0)
-      .text(inference.title)
-      .transition()
-      .duration(500)
-      .style('opacity', 1);
+            // Text labels removed for clarity (too many nodes)
+            // Hover tooltip shows the title instead
 
     // Add click handler for cluster map
     if (inference.id === 'cluster_analysis') {
@@ -303,23 +296,24 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
     currentNodes.push(inferenceNode);
     placedInferenceNodes.push(inferenceNode);
 
-    // Create links from all sources to this inference
-    sourceNodes.forEach((sourceNode) => {
-      if (!sourceNode || !sourceNode.x || !sourceNode.y) return;
+            // Create links from all sources to this inference
+            sourceNodes.forEach((sourceNode) => {
+              if (!sourceNode || !sourceNode.x || !sourceNode.y) return;
 
-      const linkId = `${sourceNode.data.id}->${inference.id}`;
-      if (createdLinks.has(linkId)) return;
+              const linkId = `${sourceNode.data.id}->${inference.id}`;
+              if (createdLinks.has(linkId)) return;
 
-      g.append('path')
-        .attr('class', 'inference-link')
-        .attr('d', curvedLink(sourceNode, inferenceNode))
-        .style('opacity', 0)
-        .transition()
-        .duration(600)
-        .style('opacity', 1);
-      
-      createdLinks.add(linkId);
-    });
+              g.append('path')
+                .attr('class', 'inference-link')
+                .datum({ source: sourceNode, target: inferenceNode }) // Store link data
+                .attr('d', curvedLink(sourceNode, inferenceNode))
+                .style('opacity', 0)
+                .transition()
+                .duration(600)
+                .style('opacity', 1);
+              
+              createdLinks.add(linkId);
+            });
 
     // Add links to target nodes (other inferences)
     if (inference.targets && Array.isArray(inference.targets)) {
@@ -338,6 +332,7 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
 
         g.append('path')
           .attr('class', 'inference-link')
+          .datum({ source: inferenceNode, target: targetNode }) // Store link data
           .attr('d', curvedLink(inferenceNode, targetNode))
           .style('opacity', 0)
           .transition()
@@ -347,8 +342,42 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
         createdLinks.add(linkId);
       });
     }
-    }); // Fim do forEach
-  } // Fim do for (3 passes)
-  
-  console.log('✅ Inferências criadas:', createdInferenceNodes.size, 'de', inferenceNodes.length);
-}
+            }); // Fim do forEach
+          } // Fim do for (3 passes)
+          
+          console.log('✅ Inferências criadas:', createdInferenceNodes.size, 'de', inferenceNodes.length);
+          
+          // ========== FORCE SIMULATION PARA EVITAR OVERLAPS ==========
+          // Aplicar força de repulsão entre nós de inferência para evitar sobreposição
+          // BEANSTALK MODE: Compact but no overlaps
+          if (placedInferenceNodes.length > 0) {
+            const simulation = d3.forceSimulation(placedInferenceNodes)
+              .force('charge', d3.forceManyBody().strength(-100)) // Repulsão MENOR para ficar denso
+              .force('collision', d3.forceCollide().radius(20)) // Raio MENOR = mais compacto
+              .force('center', d3.forceCenter(0, 0).strength(0.02)) // Muito leve
+              .alphaDecay(0.08) // Convergência mais rápida
+              .on('tick', () => {
+                // Atualizar posição dos nós durante a simulação
+                g.selectAll('.inference-node')
+                  .attr('transform', d => {
+                    const node = placedInferenceNodes.find(n => n.data.id === d.data.id);
+                    if (node) {
+                      return `translate(${node.x},${node.y})`;
+                    }
+                    return d3.select(this).attr('transform');
+                  });
+                
+                // Atualizar linhas de inferência
+                g.selectAll('.inference-link').attr('d', function() {
+                  const linkData = d3.select(this).datum();
+                  if (linkData && linkData.source && linkData.target) {
+                    return curvedLink(linkData.source, linkData.target);
+                  }
+                  return d3.select(this).attr('d');
+                });
+              });
+            
+            // Parar simulação após convergência
+            setTimeout(() => simulation.stop(), 2000);
+          }
+        }

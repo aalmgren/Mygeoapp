@@ -2,8 +2,8 @@ import { applyInferencesOverlay } from './inferencesOverlay.js';
 
 // Initialize tree renderer (layout, group, zoom) and expose a draw method
 export function initTreeRender({ svg, tooltip, margin, width, height }) {
-  // Centralizar o conteúdo
-  const g = svg.append('g').attr('transform', `translate(${width/2},${50})`);
+  // BEANSTALK MODE: Start from BOTTOM, grow UPWARD
+  const g = svg.append('g').attr('transform', `translate(${width/2},${height - 100})`); // Começar de BAIXO
 
   // zoom/pan com centralização automática
   const zoom = d3.zoom()
@@ -21,9 +21,9 @@ export function initTreeRender({ svg, tooltip, margin, width, height }) {
       const scale = Number(zoomSlider.value) / 100;
       zoomValue.textContent = zoomSlider.value + '%';
       
-      // Aplicar zoom mantendo centralização
+      // Aplicar zoom mantendo centralização (BOTTOM origin)
       const transform = d3.zoomIdentity
-        .translate(width / 2, 50)
+        .translate(width / 2, height - 100)
         .scale(scale);
       
       svg.transition()
@@ -32,11 +32,12 @@ export function initTreeRender({ svg, tooltip, margin, width, height }) {
     });
   }
 
+  // BEANSTALK LAYOUT: Compact, grows upward
   const treeLayout = d3
     .tree()
-    .size([width * 0.9, height * 0.7])
-    .separation((a, b) => (a.parent === b.parent ? 1.2 : 2))
-    .nodeSize([25, 80]);
+    .size([width * 0.8, -(height * 1.2)]) // NEGATIVE height = grow UPWARD!
+    .separation((a, b) => (a.parent === b.parent ? 0.8 : 1.2)) // Mais compacto
+    .nodeSize([20, -60]); // NEGATIVE = grow UP!
 
   function curvedPath(d) {
     const x0 = d.source.x,
