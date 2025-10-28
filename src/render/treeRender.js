@@ -13,6 +13,25 @@ export function initTreeRender({ svg, tooltip, margin, width, height }) {
     });
   svg.call(zoom);
 
+  // Controle de zoom via slider
+  const zoomSlider = document.getElementById('zoomSlider');
+  const zoomValue = document.getElementById('zoomValue');
+  if (zoomSlider && zoomValue) {
+    zoomSlider.addEventListener('input', () => {
+      const scale = Number(zoomSlider.value) / 100;
+      zoomValue.textContent = zoomSlider.value + '%';
+      
+      // Aplicar zoom mantendo centralização
+      const transform = d3.zoomIdentity
+        .translate(width / 2, 50)
+        .scale(scale);
+      
+      svg.transition()
+        .duration(300)
+        .call(zoom.transform, transform);
+    });
+  }
+
   const treeLayout = d3
     .tree()
     .size([width * 0.9, height * 0.7])
