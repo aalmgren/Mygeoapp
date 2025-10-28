@@ -28,29 +28,21 @@ function buildTreeFromNodes(dataNodes, inferences) {
             id: node.id,
             children: [],
             render_type: node.render_type,
-            column: node.column,
-            ...(node.stats && {
-                stats: typeof node.stats === 'string' ? JSON.parse(node.stats) : node.stats,
-                result: formatStats(typeof node.stats === 'string' ? JSON.parse(node.stats) : node.stats)
-            }),
-            ...(node.distribution && {
-                distribution: typeof node.distribution === 'string' ? JSON.parse(node.distribution) : node.distribution,
-                result: formatDistribution(typeof node.distribution === 'string' ? JSON.parse(node.distribution) : node.distribution)
-            }),
-            ...(node.value !== undefined && {
-                value: node.value,
-                result: String(node.value)
-            })
+            column: node.column
         };
-        
-        // LOG para debug
-        if (['x', 'y', 'z'].includes(parts[parts.length - 1])) {
-            console.log(`🔍 Creating node ${node.id}:`, {
-                hasStats: !!node.stats,
-                stats: node.stats,
-                result: treeNode.result
-            });
+
+        // Determinar qual propriedade usar (prioridade: stats > distribution > value)
+        if (node.stats) {
+            treeNode.stats = typeof node.stats === 'string' ? JSON.parse(node.stats) : node.stats;
+            treeNode.result = formatStats(treeNode.stats);
+        } else if (node.distribution) {
+            treeNode.distribution = typeof node.distribution === 'string' ? JSON.parse(node.distribution) : node.distribution;
+            treeNode.result = formatDistribution(treeNode.distribution);
+        } else if (node.value !== undefined) {
+            treeNode.value = node.value;
+            treeNode.result = String(node.value);
         }
+        
 
         // Adicionar nó ao mapa
         nodesByPath.set(node.id, treeNode);
@@ -66,20 +58,20 @@ function buildTreeFromNodes(dataNodes, inferences) {
                         id: childId,
                         children: [],
                         render_type: childNode.render_type,
-                        column: childNode.column,
-                        ...(childNode.stats && {
-                            stats: typeof childNode.stats === 'string' ? JSON.parse(childNode.stats) : childNode.stats,
-                            result: formatStats(typeof childNode.stats === 'string' ? JSON.parse(childNode.stats) : childNode.stats)
-                        }),
-                        ...(childNode.distribution && {
-                            distribution: typeof childNode.distribution === 'string' ? JSON.parse(childNode.distribution) : childNode.distribution,
-                            result: formatDistribution(typeof childNode.distribution === 'string' ? JSON.parse(childNode.distribution) : childNode.distribution)
-                        }),
-                        ...(childNode.value !== undefined && {
-                            value: childNode.value,
-                            result: String(childNode.value)
-                        })
+                        column: childNode.column
                     };
+
+                    // Determinar qual propriedade usar (prioridade: stats > distribution > value)
+                    if (childNode.stats) {
+                        childTreeNode.stats = typeof childNode.stats === 'string' ? JSON.parse(childNode.stats) : childNode.stats;
+                        childTreeNode.result = formatStats(childTreeNode.stats);
+                    } else if (childNode.distribution) {
+                        childTreeNode.distribution = typeof childNode.distribution === 'string' ? JSON.parse(childNode.distribution) : childNode.distribution;
+                        childTreeNode.result = formatDistribution(childTreeNode.distribution);
+                    } else if (childNode.value !== undefined) {
+                        childTreeNode.value = childNode.value;
+                        childTreeNode.result = String(childNode.value);
+                    }
                     nodesByPath.set(childId, childTreeNode);
                 }
             });
@@ -184,11 +176,9 @@ function buildTreeFromNodes(dataNodes, inferences) {
 }
 
 function formatStats(stats) {
-    console.log('📊 formatStats input:', stats, typeof stats);
-    
     // Ordem específica das estatísticas
     const order = ['mean', 'median', 'max', 'min', 'cv'];
-    
+
     // Labels em português
     const labels = {
         'mean': 'Média',
@@ -197,25 +187,21 @@ function formatStats(stats) {
         'min': 'Mínimo',
         'cv': 'CV'
     };
-    
+
     // Formatar cada estatística em sua própria linha
     if (typeof stats === 'string') {
         try {
             stats = JSON.parse(stats);
-            console.log('✅ Parsed stats from string:', stats);
         } catch (e) {
-            console.warn('❌ Failed to parse stats:', e);
+            console.warn('Failed to parse stats:', e);
             return stats;
         }
     }
-    
-    const result = order
+
+    return order
         .filter(key => key in stats)
         .map(key => `${labels[key]}: ${stats[key]}`)
         .join('<br>');
-    
-    console.log('📈 formatStats output:', result);
-    return result;
 }
 
 function formatDistribution(distribution) {

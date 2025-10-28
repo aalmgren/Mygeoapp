@@ -144,17 +144,9 @@ export function initTreeRender({ svg, tooltip, margin, width, height }) {
         .append('circle')
         .attr('r', 0)
         .on('mouseover', (event, d) => {
-          console.log('🖱️ Mouseover node:', {
-            name: d.data.inference,
-            column: d.data.column,
-            result: d.data.result,
-            hasResult: !!d.data.result,
-            dataKeys: Object.keys(d.data)
-          });
           const title = `<strong>${d.data.inference}</strong>`;
           const column = d.data.column ? `<br><strong>Column:</strong> ${d.data.column}` : '';
           const content = d.data.result ? `<br><br>${d.data.result}` : '';
-          console.log('💬 Tooltip HTML:', title + column + content);
           tooltip.style('opacity', 1).html(title + column + content).style('left', event.pageX + 10 + 'px').style('top', event.pageY - 10 + 'px');
         })
         .on('mouseout', () => tooltip.style('opacity', 0))
