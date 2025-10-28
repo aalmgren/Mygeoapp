@@ -8,7 +8,7 @@ const createdInferenceNodes = new Map();
 const placedInferenceNodes = [];
 const createdLinks = new Set(); // Links já criados
 
-export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenceNodes, curvedLink, readyForInferences }) {
+export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenceNodes, curvedLink, readyForInferences, tooltip }) {
   if (!Array.isArray(currentNodes) || !Array.isArray(inferenceNodes)) {
     return;
   }
@@ -276,6 +276,17 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
         .style('cursor', 'pointer')
         .on('click', () => showClusterMap());
     }
+
+    // Add tooltip for mouseover
+    nodeGroup
+      .on('mouseover', (event) => {
+        tooltip
+          .style('opacity', 1)
+          .html(`<strong>${inference.title}</strong><br><br>${inferenceNode.data.result}`)
+          .style('left', event.pageX + 10 + 'px')
+          .style('top', event.pageY - 10 + 'px');
+      })
+      .on('mouseout', () => tooltip.style('opacity', 0));
 
     // Add to currentNodes and tracking array
     currentNodes.push(inferenceNode);

@@ -76,13 +76,14 @@ export function initTreeRender({ svg, tooltip, margin, width, height }) {
     });
 
     // Apply special inference overlay (adds nodes/links)
-    applyInferencesOverlay({ 
-      g, 
-      currentNodes: treeNodes, 
-      visibleNodes, 
+    applyInferencesOverlay({
+      g,
+      currentNodes: treeNodes,
+      visibleNodes,
       inferenceNodes: inferenceNodes || [],
       curvedLink,
-      readyForInferences
+      readyForInferences,
+      tooltip
     });
 
     const currentLinks = treeNodes
