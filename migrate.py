@@ -5,6 +5,7 @@ Migration runner for Neo4j knowledge tree.
 import logging
 from migrations.m001_initial_structure import InitialStructureMigration
 from migrations.m002_inferences import InferencesMigration
+from migrations.m003_workflow_pipeline import WorkflowPipelineMigration
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -12,7 +13,8 @@ logger = logging.getLogger(__name__)
 # List all migrations in order
 MIGRATIONS = [
     InitialStructureMigration(),
-    InferencesMigration()
+    InferencesMigration(),
+    WorkflowPipelineMigration()
 ]
 
 def run_migrations():

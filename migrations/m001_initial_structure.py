@@ -19,49 +19,56 @@ class InitialStructureMigration(BaseMigration):
                 id: 'collar.hole_id',
                 title: 'Hole ID',
                 column: 'BHID',
-                render_type: 'value'
+                render_type: 'value',
+                type: 'data'
             })
             CREATE (x:DataNode {
                 id: 'collar.x',
                 title: 'X',
                 column: 'XCOLLAR',
                 render_type: 'stats_summary',
-                stats: $x_stats
+                stats: $x_stats,
+                type: 'data'
             })
             CREATE (y:DataNode {
                 id: 'collar.y',
                 title: 'Y',
                 column: 'YCOLLAR',
                 render_type: 'stats_summary',
-                stats: $y_stats
+                stats: $y_stats,
+                type: 'data'
             })
             CREATE (z:DataNode {
                 id: 'collar.z',
                 title: 'Z',
                 column: 'ZCOLLAR',
                 render_type: 'stats_summary',
-                stats: $z_stats
+                stats: $z_stats,
+                type: 'data'
             })
             CREATE (depth:DataNode {
                 id: 'collar.depth',
                 title: 'Depth',
                 column: 'DEPTH',
                 render_type: 'stats_summary',
-                stats: $depth_stats
+                stats: $depth_stats,
+                type: 'data'
             })
             CREATE (drill_type:DataNode {
                 id: 'collar.drill_type',
                 title: 'Drill Type',
                 column: 'DTYPE',
                 render_type: 'distribution',
-                distribution: $drill_dist
+                distribution: $drill_dist,
+                type: 'data'
             })
             CREATE (diameter:DataNode {
                 id: 'collar.diameter',
                 title: 'Diameter',
                 column: 'DIAM',
                 render_type: 'distribution',
-                distribution: $diam_dist
+                distribution: $diam_dist,
+                type: 'data'
             })
             
             // Connect collar nodes
@@ -80,21 +87,24 @@ class InitialStructureMigration(BaseMigration):
                 title: 'At',
                 column: 'AT',
                 render_type: 'stats_summary',
-                stats: $at_stats
+                stats: $at_stats,
+                type: 'data'
             })
             CREATE (dip:DataNode {
                 id: 'survey.dip',
                 title: 'Dip',
                 column: 'DIP',
                 render_type: 'stats_summary',
-                stats: $dip_stats
+                stats: $dip_stats,
+                type: 'data'
             })
             CREATE (azimuth:DataNode {
                 id: 'survey.azimuth',
                 title: 'Azimuth',
                 column: 'BRG',
                 render_type: 'stats_summary',
-                stats: $azimuth_stats
+                stats: $azimuth_stats,
+                type: 'data'
             })
             
             // Connect survey nodes
@@ -109,19 +119,22 @@ class InitialStructureMigration(BaseMigration):
                 id: 'assay.elements.Ni',
                 title: 'Ni',
                 render_type: 'stats_summary',
-                stats: $ni_stats
+                stats: $ni_stats,
+                type: 'data'
             })
             CREATE (si:DataNode {
                 id: 'assay.elements.Si',
                 title: 'Si',
                 render_type: 'stats_summary',
-                stats: $si_stats
+                stats: $si_stats,
+                type: 'data'
             })
             CREATE (mg:DataNode {
                 id: 'assay.elements.Mg',
                 title: 'Mg',
                 render_type: 'stats_summary',
-                stats: $mg_stats
+                stats: $mg_stats,
+                type: 'data'
             })
             
             // Connect assay nodes
@@ -137,7 +150,8 @@ class InitialStructureMigration(BaseMigration):
                 title: 'LITO',
                 column: 'LITO',
                 render_type: 'distribution',
-                distribution: $lito_dist
+                distribution: $lito_dist,
+                type: 'data'
             })
             
             // Connect lithology nodes

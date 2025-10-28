@@ -22,13 +22,14 @@ function buildTreeFromNodes(dataNodes, inferences) {
         // Ignorar subnodes (stats, distribution)
         if (parts[parts.length - 1] === 'stats' || parts[parts.length - 1] === 'distribution') return;
         
-        // Criar ou atualizar nó
+                // Criar ou atualizar nó
         const treeNode = {
             inference: parts[parts.length - 1],
             id: node.id,
             children: [],
             render_type: node.render_type,
-            column: node.column
+            column: node.column,
+            type: node.type
         };
 
         // Determinar qual propriedade usar (prioridade: stats > distribution > value)
@@ -58,7 +59,8 @@ function buildTreeFromNodes(dataNodes, inferences) {
                         id: childId,
                         children: [],
                         render_type: childNode.render_type,
-                        column: childNode.column
+                        column: childNode.column,
+                        type: childNode.type
                     };
 
                     // Determinar qual propriedade usar (prioridade: stats > distribution > value)
@@ -101,31 +103,33 @@ function buildTreeFromNodes(dataNodes, inferences) {
     
     console.log('📊 Raw inferences from Neo4j:', inferences);
 
-    // Processar inferências com estrutura correta e logging
-    const inferenceNodes = inferences.map(inference => {
-        console.log('🔄 Processing inference from Neo4j:', inference);
+            // Processar inferências com estrutura correta e logging
+            const inferenceNodes = inferences.map(inference => {
+                console.log('🔄 Processing inference from Neo4j:', inference);
+                console.log('  → type field:', inference.type, typeof inference.type);
 
-        // Parse JSON strings if needed
-        const evidence = typeof inference.evidence === 'string' ? 
-            JSON.parse(inference.evidence || '{}') : (inference.evidence || {});
-        const implications = typeof inference.implications === 'string' ? 
-            JSON.parse(inference.implications || '[]') : (inference.implications || []);
-        const recommendations = typeof inference.recommendations === 'string' ? 
-            JSON.parse(inference.recommendations || '[]') : (inference.recommendations || []);
-        const metadata = typeof inference.metadata === 'string' ? 
-            JSON.parse(inference.metadata || '{}') : (inference.metadata || {});
+                // Parse JSON strings if needed
+                const evidence = typeof inference.evidence === 'string' ? 
+                    JSON.parse(inference.evidence || '{}') : (inference.evidence || {});
+                const implications = typeof inference.implications === 'string' ? 
+                    JSON.parse(inference.implications || '[]') : (inference.implications || []);
+                const recommendations = typeof inference.recommendations === 'string' ? 
+                    JSON.parse(inference.recommendations || '[]') : (inference.recommendations || []);
+                const metadata = typeof inference.metadata === 'string' ? 
+                    JSON.parse(inference.metadata || '{}') : (inference.metadata || {});
 
-        // Log para debug
-        console.log('✨ Transformed inference:', {
-            id: inference.id,
-            title: inference.title,
-            sources: inference.sources,
-            targets: inference.targets,
-            evidence,
-            implications,
-            recommendations,
-            metadata
-        });
+                // Log para debug
+                console.log('✨ Transformed inference:', {
+                    id: inference.id,
+                    title: inference.title,
+                    type: inference.type,
+                    sources: inference.sources,
+                    targets: inference.targets,
+                    evidence,
+                    implications,
+                    recommendations,
+                    metadata
+                });
 
         // Ensure all required fields are present and correctly formatted
         if (!inference.id || !inference.title || !inference.sources) {
@@ -133,18 +137,19 @@ function buildTreeFromNodes(dataNodes, inferences) {
             return null;
         }
 
-        return {
-            title: inference.title,
-            id: inference.id,
-            isInference: true,
-            evidence,
-            implications,
-            recommendations,
-            metadata,
-            sources: inference.sources.map(s => s.trim()).filter(Boolean),
-            targets: inference.targets?.map(t => t.trim()).filter(Boolean) || [],
-            result: formatInferenceContent({ evidence, implications, recommendations })
-        };
+                return {
+                    title: inference.title,
+                    id: inference.id,
+                    type: inference.type,
+                    isInference: true,
+                    evidence,
+                    implications,
+                    recommendations,
+                    metadata,
+                    sources: inference.sources.map(s => s.trim()).filter(Boolean),
+                    targets: inference.targets?.map(t => t.trim()).filter(Boolean) || [],
+                    result: formatInferenceContent({ evidence, implications, recommendations })
+                };
     });
     
     const result = {

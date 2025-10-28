@@ -30,13 +30,12 @@ h2 { text-align: center; padding: 10px; margin: 0; border-bottom: 1px solid #ddd
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.inference-node rect {
+.inference-node circle {
   transition: all 0.3s ease;
 }
 
-.inference-node:hover rect {
-  fill: #bbdefb;
-  stroke-dasharray: none;
+.inference-node:hover circle {
+  filter: brightness(1.2);
 }
 
 .inference-link {

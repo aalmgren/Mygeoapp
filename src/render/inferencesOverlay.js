@@ -249,26 +249,37 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
       .attr('transform', `translate(${position.x},${position.y})`)
       .datum(inferenceNode);
 
-    // Add background rectangle
-    nodeGroup.append('rect')
-      .attr('x', -60)
-      .attr('y', -20)
-      .attr('width', 120)
-      .attr('height', 40)
-      .attr('rx', 5)
-      .attr('ry', 5)
-      .style('fill', '#e3f2fd')
-      .style('stroke', '#2196F3')
-      .style('stroke-width', '2px')
-      .style('stroke-dasharray', '5,5');
+    // Determinar cor baseada no type [V1.0.7]
+    console.log(`🎨 [V1.0.7] Renderizando "${inference.id}" com type="${inference.type}"`);
+    const colors = {
+      'interpretation': { fill: '#2196F3', stroke: '#1976D2' },  // Azul
+      'action': { fill: '#9C27B0', stroke: '#7B1FA2' }  // Roxo
+    };
+    const color = colors[inference.type] || colors['interpretation'];
+    console.log(`  → Cor: ${color.fill} (${inference.type === 'action' ? 'ROXO' : 'AZUL'})`);
 
-    // Add text
+    // Add círculo (bolinha) em vez de retângulo
+    nodeGroup.append('circle')
+      .attr('r', 0)
+      .style('fill', color.fill)
+      .style('stroke', color.stroke)
+      .style('stroke-width', '2px')
+      .transition()
+      .duration(600)
+      .ease(d3.easeBackOut.overshoot(1.2))
+      .attr('r', 8);
+
+    // Add text (label)
     nodeGroup.append('text')
-      .attr('dy', '0.3em')
+      .attr('dy', -15)
       .attr('text-anchor', 'middle')
-      .style('fill', '#1976D2')
-      .style('font-size', '14px')
-      .text(inference.title);
+      .style('fill', '#333')
+      .style('font-size', '12px')
+      .style('opacity', 0)
+      .text(inference.title)
+      .transition()
+      .duration(500)
+      .style('opacity', 1);
 
     // Add click handler for cluster map
     if (inference.id === 'cluster_analysis') {

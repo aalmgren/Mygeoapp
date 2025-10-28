@@ -56,6 +56,7 @@ class Neo4jClient {
                        n.value as value,
                        n.render_type as render_type,
                        n.column as column,
+                       n.type as type,
                        children
                 ORDER BY n.id
             `);
@@ -68,6 +69,7 @@ class Neo4jClient {
                     value: record.get('value'),
                     render_type: record.get('render_type'),
                     column: record.get('column'),
+                    type: record.get('type'),
                     children: record.get('children')
                 };
                 console.log('Raw node from Neo4j:', node);
@@ -81,6 +83,7 @@ class Neo4jClient {
     }
 
     async getInferences() {
+        console.log('🚀 getInferences() v1.0.6 - Buscando com campo TYPE');
         const session = await this.getSession();
         try {
             // Buscar inferências com todas as relações em uma única query
@@ -106,6 +109,7 @@ class Neo4jClient {
                 RETURN DISTINCT
                     i.id as id,
                     i.title as title,
+                    i.type as type,
                     i.evidence as evidence,
                     i.implications as implications,
                     i.recommendations as recommendations,
@@ -127,9 +131,21 @@ class Neo4jClient {
                     }
                 };
 
-                // Get and clean up values
+                // Get and clean up values - V1.0.6 WITH TYPE FIELD
                 const id = record.get('id');
                 const title = record.get('title');
+                const typeRaw = record.get('type');
+                const type = typeRaw; // Preserve original value
+                
+                // DEBUG INTENSO: Ver TUDO que está vindo
+                console.log(`🔍 [v1.0.6] Neo4j record for "${id}":`, {
+                    raw_type: typeRaw,
+                    type_value: type,
+                    type_typeof: typeof type,
+                    record_keys: record.keys,
+                    has_type_key: record.keys.includes('type')
+                });
+                
                 const evidence = parseJson(record.get('evidence'), {});
                 const implications = parseJson(record.get('implications'), []);
                 const recommendations = parseJson(record.get('recommendations'), []);
@@ -137,16 +153,12 @@ class Neo4jClient {
                 const sources = record.get('sources').filter(Boolean);
                 const targets = record.get('targets').filter(Boolean);
 
-                console.log('Processing inference:', {
-                    id,
-                    title,
-                    sourcesCount: sources.length,
-                    targetsCount: targets.length
-                });
+                console.log(`✅ [v1.0.6] Inference "${id}" parsed with type="${type}"`);
 
                 return {
                     id,
                     title,
+                    type,
                     evidence,
                     implications,
                     recommendations,

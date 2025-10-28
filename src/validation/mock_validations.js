@@ -4,41 +4,46 @@ export const mockValidations = {
     rules: [
       {
         id: 'c1',
-        check: 'Coordinates present and valid',
+        check: 'Coordinate system validation (WGS84 UTM Zone 54S)',
         severity: 'error',
         details: [
-          'X coordinate must be between 300000 and 400000',
-          'Y coordinate must be between 7000000 and 8000000',
-          'Z coordinate must be between -1000 and 2000'
+          'XCOLLAR: 12 holes outside valid easting range (300000-400000mE)',
+          'YCOLLAR: 8 holes outside valid northing range (7000000-8000000mN)',
+          'ZCOLLAR: 3 holes with Z > topographic surface (+150m discrepancy)',
+          'Suspected local grid vs UTM mismatch in SW sector'
         ]
       },
       {
         id: 'c2',
-        check: 'Hole ID format validation',
+        check: 'Hole ID naming convention (JORC compliant)',
         severity: 'error',
         details: [
-          'Must start with DDH- or RC-',
-          'Must be followed by 3-4 digits',
-          'Optional A-Z suffix'
+          'DDH-2024-045A: Invalid year prefix (should be project code)',
+          'RC_198: Missing campaign identifier and hyphen format',
+          '15 holes lack drill type prefix (DDH- vs RC-)',
+          'Recommended format: [TYPE]-[CAMPAIGN]-[SEQ][SUFFIX]'
         ]
       },
       {
         id: 'c3',
-        check: 'Depth validation',
+        check: 'End-of-hole depth consistency',
         severity: 'error',
         details: [
-          'Must be positive',
-          'Must be less than 1000m',
-          'Must match last survey depth'
+          'DDH-045: Collar depth=250m, last survey=248m (2m gap)',
+          'DDH-102: Collar depth=180m, last assay=185m (over-depth sampling)',
+          '23 holes show depth mismatch > 0.5m (excessive drill string stretch?)',
+          'Recommend survey validation and downhole depth reconciliation'
         ]
       },
       {
         id: 'c4',
-        check: 'Duplicate hole check',
+        check: 'Spatial collision detection (< 5m tolerance)',
         severity: 'error',
         details: [
-          'No duplicate hole IDs allowed',
-          'Check for similar coordinates'
+          'DDH-045 and DDH-045A: Same collar (0.2m apart) - confirm wedge vs twin',
+          'RC-198 and DDH-199: Overlapping collars (3.1m) in Grid 400E-2000N',
+          'Cluster of 12 holes within 10m radius in Target A (dense infill?)',
+          'Recommend collar survey validation and project database reconciliation'
         ]
       }
     ]
@@ -49,30 +54,35 @@ export const mockValidations = {
     rules: [
       {
         id: 's1',
-        check: 'Dip validation',
+        check: 'Downhole deviation analysis (DIP angle validation)',
         severity: 'error',
         details: [
-          'Must be between -90° and 90°',
-          'Check for sudden changes > 15°'
+          'DDH-034: DIP changed from -85° to -45° over 50m (40° deviation - tool failure?)',
+          'RC-156: Positive dip (+12°) detected at 120m (uphole drilling anomaly)',
+          '18 holes show > 15° deviation within 30m interval (excessive curvature)',
+          'Magnetic interference suspected in holes near ultramafic contact'
         ]
       },
       {
         id: 's2',
-        check: 'Azimuth validation',
+        check: 'Azimuth consistency and magnetic declination',
         severity: 'error',
         details: [
-          'Must be between 0° and 360°',
-          'Check for sudden changes > 30°'
+          'BRG variance > 45° in 8 vertical holes (magnetic tool malfunction?)',
+          'Azimuth 0° default value detected in 5 holes (missing survey data)',
+          'Declination correction not applied (12° offset from grid north)',
+          'Recommend gyro survey validation for resource holes'
         ]
       },
       {
         id: 's3',
-        check: 'Depth sequence',
+        check: 'Survey interval spacing and EOH validation',
         severity: 'error',
         details: [
-          'Must be increasing',
-          'No gaps allowed',
-          'Must match collar depth'
+          'DDH-067: 80m gap between surveys (exceeds 30m JORC guideline)',
+          '12 holes missing final EOH survey (depth extrapolation required)',
+          'Survey@0m (collar) missing in 6 holes (assume vertical?)',
+          'Recommend infill surveys for resource classification upgrade'
         ]
       }
     ]
@@ -83,32 +93,35 @@ export const mockValidations = {
     rules: [
       {
         id: 'a1',
-        check: 'Element values validation',
+        check: 'Geochemical values and detection limits (pXRF + Lab ICP)',
         severity: 'error',
         details: [
-          'Ni must be between 0 and 5%',
-          'Cu must be between 0 and 3%',
-          'Co must be between 0 and 1%'
+          'Ni: 3 samples > 5.5% (above laterite typical max, reanalyze for sulfide zones)',
+          'Si: 12 samples < 15% (unusually low for ultramafic, check for Fe oxides)',
+          'Mg: 45 samples returned as <DL (detection limit issue, use lower LOD method)',
+          'Ni/MgO ratio > 10 in 8 samples (unrealistic for laterite, suspect lab contamination)'
         ]
       },
       {
         id: 'a2',
-        check: 'QAQC presence',
+        check: 'QAQC protocol compliance (CRM + Field Duplicates + Blanks)',
         severity: 'warning',
         details: [
-          'Standards: 1 every 20 samples',
-          'Duplicates: 1 every 20 samples',
-          'Blanks: 1 every 50 samples'
+          'Standards: OREAS-45e drift detected (+8% bias after sample 450)',
+          'Field duplicates: 6 pairs show >15% RPD (poor field sampling precision)',
+          'Blanks: 2 contamination events detected (Ni > 0.05% in blank material)',
+          'Lab batch LB-2024-08: Failed QC, 67 samples require re-assay'
         ]
       },
       {
         id: 'a3',
-        check: 'Sample intervals',
+        check: 'Composite interval validation and sample recovery',
         severity: 'error',
         details: [
-          'No gaps allowed',
-          'No overlaps allowed',
-          'Must match lithology intervals'
+          'DDH-089: 5m gap in assay interval (140-145m missing - lost core?)',
+          'RC-045: Overlapping intervals detected (88-90m + 89-91m duplicate compositing)',
+          '34 samples show <80% recovery (reject or apply density correction)',
+          'Composite length variance: 0.5-3.0m (standardize to 1m for resource est.)'
         ]
       }
     ]
@@ -119,32 +132,35 @@ export const mockValidations = {
     rules: [
       {
         id: 'l1',
-        check: 'Valid codes',
+        check: 'Lithology code standardization (domain dictionary compliance)',
         severity: 'error',
         details: [
-          'Must match domain list',
-          'No undefined codes',
-          'Case sensitive'
+          'Code "SAPRO" detected: Use standard "SAP" (8 intervals affected)',
+          'Code "laterite" vs "LAT": Case-sensitivity issue (15 intervals)',
+          '"UNK" (Unknown) used in 23 intervals - requires re-logging',
+          'Transitional codes missing: Need SAP/LAT gradational boundary codes'
         ]
       },
       {
         id: 'l2',
-        check: 'Interval validation',
+        check: 'Logging interval continuity and EOH coverage',
         severity: 'error',
         details: [
-          'No gaps allowed',
-          'No overlaps allowed',
-          'Must match collar depth'
+          'DDH-078: Lithology gap 45-52m (7m unlogged - low recovery zone?)',
+          'DDH-012: Overlapping litho intervals (125-130m + 128-133m)',
+          '5 holes: Lithology ends before collar depth (incomplete logging)',
+          'Weathering contact zone poorly defined (5-15m thick transition)'
         ]
       },
       {
         id: 'l3',
-        check: 'Description presence',
+        check: 'Geological description quality and consistency',
         severity: 'warning',
         details: [
-          'Must have description',
-          'Minimum 10 characters',
-          'No generic descriptions'
+          '34 intervals logged as "SAP" with no texture/color qualifier',
+          'Oxidation state missing in 67% of laterite intervals (critical for domains)',
+          'Logging geologist changed at hole 150 - terminology drift detected',
+          'Recommend standardized logging template and cross-validation by senior geo'
         ]
       }
     ]

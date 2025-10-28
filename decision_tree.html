@@ -22,7 +22,10 @@
   <div class="tooltip"></div>
 
   <script type="module">
-    import { transformNeo4jToTree } from './src/transform/transformNeo4jToTree.js';
+    // Force cache bust with timestamp
+    const timestamp = Date.now();
+    const transformModule = await import(`./src/transform/transformNeo4jToTree.js?v=${timestamp}`);
+    const { transformNeo4jToTree } = transformModule;
     
     // Atualizar badge de versão
     fetch('version.txt')
@@ -34,8 +37,8 @@
         document.getElementById('versionBadge').textContent = 'v1.0.0 (dev)';
       });
     
-    // Resto do código
-    import('./src/main.js');
+    // Resto do código com cache bust
+    import(`./src/main.js?v=${timestamp}`);
   </script>
 </body>
 </html>
