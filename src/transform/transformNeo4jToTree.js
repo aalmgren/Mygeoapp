@@ -199,7 +199,7 @@ function formatStats(stats) {
     return order
         .filter(key => key in stats)
         .map(key => `${labels[key]}: ${stats[key]}`)
-        .join('\\n');
+        .join('<br>');
 }
 
 function formatDistribution(distribution) {
@@ -214,7 +214,7 @@ function formatDistribution(distribution) {
     }
     return Object.entries(distribution)
         .map(([key, value]) => `${key}: ${value}%`)
-        .join('\\n');
+        .join('<br>');
 }
 
 function formatInferenceContent(inference) {
@@ -232,20 +232,20 @@ function formatInferenceContent(inference) {
     }
     
     if (inference.implications?.length) {
-        content.push('\\nImplications:');
+        content.push('<br>Implications:');
         inference.implications.forEach(imp => {
             content.push(`  • ${imp}`);
         });
     }
     
     if (inference.recommendations?.length) {
-        content.push('\\nRecommendations:');
+        content.push('<br>Recommendations:');
         inference.recommendations.forEach(rec => {
             content.push(`  • ${rec}`);
         });
     }
     
-    return content.join('\\n');
+    return content.join('<br>');
 }
 
 export async function transformNeo4jToTree() {
