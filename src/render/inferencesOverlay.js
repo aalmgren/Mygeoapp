@@ -3,46 +3,37 @@
 
 import { showClusterMap } from '../interactions/clusterMap.js';
 
-export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenceNodes, curvedLink }) {
-  console.log('🔍 Applying inferences overlay:', {
-    currentNodesCount: currentNodes?.length || 0,
-    visibleNodesCount: visibleNodes?.length || 0,
-    inferenceNodesCount: inferenceNodes?.length || 0
-  });
-
+export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenceNodes, curvedLink, readyForInferences }) {
   if (!Array.isArray(currentNodes) || !Array.isArray(inferenceNodes)) {
-    console.warn('❌ Invalid input:', { currentNodes, inferenceNodes });
+    return;
+  }
+
+  // Se não estiver pronto para mostrar inferências, limpar qualquer inferência existente e sair
+  if (!readyForInferences) {
+    g.selectAll('.inference-node').remove();
+    g.selectAll('.inference-link').remove();
     return;
   }
 
   // Collision detection constants
-  const MIN_DISTANCE = 200; // Aumentado para evitar sobreposição
-  const CARD_WIDTH = 120; // Aumentado para textos maiores
-  const CARD_HEIGHT = 40; // Aumentado para melhor visibilidade
-  const MAX_ATTEMPTS = 100; // Mais tentativas para encontrar posição
-  const VERTICAL_SPACING = 180; // Espaçamento vertical entre níveis de inferência
+  const MIN_DISTANCE = 100;
+  const CARD_WIDTH = 120;
+  const CARD_HEIGHT = 40;
+  const MAX_ATTEMPTS = 50;
+  const VERTICAL_SPACING = 120;
 
-  // Helper: find node by label (exact match)
-  const byLabel = (label) => currentNodes.find((d) => d && d.data && d.data.inference === label);
+  // Cache de inferências já criadas neste loop
+  const createdInferenceNodes = new Map();
 
-  // Helper: find node by path (e.g., "assay.elements.Ni" → "Ni" or "inferences.ni_lateritico" → by title)
+  // Helper: find node by path
   const byPath = (path) => {
-    // Check if it's a reference to another inference
     if (path.startsWith('inferences.')) {
       const inferenceId = path.split('.')[1];
-      // Procurar nó por ID nas inferências fornecidas
-      const inference = inferenceNodes.find(inf => inf.id === inferenceId);
-      if (inference) {
-        // Procurar nó por título
-        const node = currentNodes.find((d) => 
-          d && d.data && d.data.inference === inference.title
-        );
-        return node;
+      if (createdInferenceNodes.has(inferenceId)) {
+        return createdInferenceNodes.get(inferenceId);
       }
       return null;
     }
-    
-    // Otherwise, find by full path
     return currentNodes.find((d) => d && d.data && d.data.id === path);
   };
 
@@ -94,94 +85,32 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
   // Track already placed inference nodes for collision detection
   const placedInferenceNodes = [];
 
-  // Process each inference node
-  // Primeiro, ordenar inferências baseado em suas dependências
-  const orderedInferences = [];
-  const remainingInferences = [...inferenceNodes].filter(Boolean);
-  const processedIds = new Set();
 
-  function canProcessInference(inference) {
-    if (!inference.sources) return true;
-    return inference.sources.every(sourcePath => {
-      if (sourcePath.startsWith('inferences.')) {
-        const inferenceId = sourcePath.split('.')[1];
-        return processedIds.has(inferenceId);
-      }
-      return visibleNodes.some(v => v.data && v.data.id === sourcePath);
-    });
-  }
-
-  // Ordenar inferências baseado em suas dependências
-  while (remainingInferences.length > 0) {
-    const processableIndex = remainingInferences.findIndex(canProcessInference);
-    if (processableIndex === -1) break; // Evitar loop infinito se houver dependência circular
-    
-    const inference = remainingInferences.splice(processableIndex, 1)[0];
-    orderedInferences.push(inference);
-    processedIds.add(inference.id);
-  }
-
-  // Processar inferências na ordem correta
-  orderedInferences.forEach(inference => {
-      if (!inference.sources || !Array.isArray(inference.sources)) {
-        console.warn('⚠️ Invalid inference sources:', inference);
+  // SIMPLIFICADO: 3 passes para resolver dependências
+  // Pass 1: Inferências sem dependências de outras inferências
+  // Pass 2: Inferências que dependem de Pass 1
+  // Pass 3: Inferências que dependem de Pass 2
+  
+  for (let pass = 0; pass < 3; pass++) {
+    inferenceNodes.forEach(inference => {
+      if (!inference || !inference.sources || !Array.isArray(inference.sources)) {
         return;
       }
 
-  // Find all source nodes
-  console.log('🔄 Processing inference:', {
-    id: inference.id,
-    title: inference.title,
-    sources: inference.sources,
-    targets: inference.targets
-  });
+      // Pular se já foi criada
+      if (createdInferenceNodes.has(inference.id)) {
+        return;
+      }
 
-  const sourceNodes = inference.sources
-    .map((sourcePath) => {
-      // Ajustar caminhos para corresponder aos nós reais
-      const adjustedPath = sourcePath
-        .replace('data_nodes.coordinates.', 'collar.')
-        .replace('data_nodes.geology.', 'lithology.')
-        .replace('data_nodes.assay.', 'assay.elements.');
-      
-      const node = byPath(adjustedPath);
-      console.log(`🔍 Looking for source node '${adjustedPath}':`, node ? '✅ Found' : '❌ Not found');
-      return node;
-    })
-    .filter(Boolean); // Remove nulls
+      // Find all source nodes
+      const sourceNodes = inference.sources
+        .map(byPath)
+        .filter(Boolean);
 
-  // Only create inference if we have at least one source
-  if (sourceNodes.length === 0) {
-    console.warn('⚠️ No source nodes found for inference:', inference.id);
-    return;
-  }
-
-  console.log('✅ Found source nodes:', sourceNodes.map(n => n.data.id));
-
-    // CRITICAL: Check if ALL source nodes are actually visible in animation
-    // This ensures organic growth: green nodes appear first, then blue inference nodes
-    const allSourcesVisible = sourceNodes.every((sourceNode) => 
-      visibleNodes.some((visibleNode) => visibleNode.data === sourceNode.data)
-    );
-
-    console.log('👀 Checking source nodes visibility:', {
-      inference: inference.id,
-      sourceNodes: sourceNodes.map(n => n.data.id),
-      visibleNodes: visibleNodes.map(n => n.data.id),
-      allSourcesVisible
-    });
-
-    if (!allSourcesVisible) {
-      console.log('⏳ Waiting for source nodes to appear:', 
-        sourceNodes
-          .filter(sourceNode => !visibleNodes.some(v => v.data === sourceNode.data))
-          .map(n => n.data.id)
-      );
-      return;
-    }
-
-    // Check if inference node already exists
-    if (byLabel(inference.title)) return;
+      // Pular se não encontrou todos os sources
+      if (sourceNodes.length !== inference.sources.length) {
+        return;
+      }
 
     // Calculate initial position based on inference type and level
     let avgX = sourceNodes.reduce((sum, n) => sum + n.x, 0) / sourceNodes.length;
@@ -234,7 +163,8 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
     // Find collision-free position
     const position = findCollisionFreePosition(initialX, initialY, [
       ...currentNodes.filter(n => !n.data.isInference), // Avoid regular nodes
-      ...placedInferenceNodes // Avoid other inference nodes
+      ...placedInferenceNodes, // Avoid other inference nodes
+      ...Array.from(createdInferenceNodes.values()) // Avoid inferences created in this loop
     ]);
 
     // Build tooltip content from standardized fields: evidence, implications, recommendations
@@ -300,11 +230,8 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
       },
     };
 
-    console.log('🎨 Creating inference node:', {
-      inference: inference.id,
-      position,
-      sourceNodes: sourceNodes.map(n => n.data.id)
-    });
+    // Adicionar ao cache
+    createdInferenceNodes.set(inference.id, inferenceNode);
 
     // Create node group (after data nodes)
     const nodeGroup = g.append('g')
@@ -346,17 +273,7 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
 
     // Create links from all sources to this inference
     sourceNodes.forEach((sourceNode) => {
-      if (!sourceNode || !sourceNode.x || !sourceNode.y) {
-        console.warn('⚠️ Invalid source node:', sourceNode);
-        return;
-      }
-
-      console.log('🔗 Creating link:', {
-        from: sourceNode.data.id,
-        to: inferenceNode.data.id,
-        sourcePos: { x: sourceNode.x, y: sourceNode.y },
-        targetPos: { x: inferenceNode.x, y: inferenceNode.y }
-      });
+      if (!sourceNode || !sourceNode.x || !sourceNode.y) return;
 
       g.append('path')
         .attr('class', 'inference-link')
@@ -370,28 +287,14 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
     // Add links to target nodes (other inferences)
     if (inference.targets && Array.isArray(inference.targets)) {
       inference.targets.forEach(targetId => {
-        if (!targetId) {
-          console.warn('⚠️ Invalid target ID:', targetId);
-          return;
-        }
+        if (!targetId) return;
 
-        const targetNode = currentNodes.find(n => n.data && n.data.id === targetId);
+        let targetNode = createdInferenceNodes.get(targetId);
         if (!targetNode) {
-          console.warn('⚠️ Target node not found:', targetId);
-          return;
+          targetNode = currentNodes.find(n => n.data && n.data.id === targetId);
         }
-
-        if (!targetNode.x || !targetNode.y) {
-          console.warn('⚠️ Target node has no position:', targetNode);
-          return;
-        }
-
-        console.log('🔗 Creating target link:', {
-          from: inferenceNode.data.id,
-          to: targetNode.data.id,
-          sourcePos: { x: inferenceNode.x, y: inferenceNode.y },
-          targetPos: { x: targetNode.x, y: targetNode.y }
-        });
+        
+        if (!targetNode || !targetNode.x || !targetNode.y) return;
 
         g.append('path')
           .attr('class', 'inference-link')
@@ -402,5 +305,8 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
           .style('opacity', 1);
       });
     }
-  });
+    }); // Fim do forEach
+  } // Fim do for (3 passes)
+  
+  console.log('✅ Inferências criadas:', createdInferenceNodes.size, 'de', inferenceNodes.length);
 }

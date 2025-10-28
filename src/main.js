@@ -4,10 +4,10 @@ import { initGrowthController } from './animation/growthController.js';
 import { initTreeRender } from './render/treeRender.js';
 import { initValidationFooter } from './validation/validation_footer.js';
 
-// Setup dimensions
-const width = Math.min(window.innerWidth - 80, 1400); // Aumentar largura máxima
-const height = Math.min(window.innerHeight - 120, 1000); // Aumentar altura máxima
-const margin = { top: 30, right: 30, bottom: 30, left: 30 }; // Reduzir margens
+// Setup dimensions - usar viewport completo
+const width = window.innerWidth - 40;
+const height = window.innerHeight - 200; // Espaço para header e footer
+const margin = { top: 20, right: 20, bottom: 20, left: 20 };
 
 // Setup D3 selections
 const svg = d3.select('#tree-svg');
@@ -57,28 +57,20 @@ transformNeo4jToTree().then(treeData => {
       for (const firstLevel of root.children) dfs(firstLevel, 1);
     }
 
+    // Inferências não precisam estar em allNodes (aparecem todas de uma vez no final)
+
     // Track visible nodes
     const visibleNodes = [root];
 
     // Draw function
 function draw({ readyForInferences = false } = {}) {
-  // Log para debug
-  console.log('🎨 Drawing tree state:', {
-    visibleNodesCount: visibleNodes.length,
-    totalNodes: allNodes.length,
-    progress: `${visibleNodes.length}/${allNodes.length}`,
-    currentVisible: visibleNodes.map(n => n.data.id),
-    inferenceNodesCount: rootNode.inferenceNodes?.length || 0,
-    inferenceNodes: rootNode.inferenceNodes?.map(n => n.id) || []
-  });
-  
   drawTree({ 
     visibleNodes, 
     currentNodes: allNodes.map(n => ({
       ...n.node,
       data: {
         ...n.node.data,
-        id: n.node.data.id || n.node.data.inference // Ensure we have an ID
+        id: n.node.data.id || n.node.data.inference
       }
     })),
     inferenceNodes: rootNode.inferenceNodes || [],
@@ -86,12 +78,12 @@ function draw({ readyForInferences = false } = {}) {
   });
     }
 
-    // Initialize growth animation controller
+    // Initialize growth animation controller (3 segundos fixo)
     initGrowthController({
       allNodes,
       visibleNodes,
       draw,
-      defaultDurationSec: 10,
+      defaultDurationSec: 3,
     });
 
     // Initialize validation footer

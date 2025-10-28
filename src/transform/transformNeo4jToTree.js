@@ -1,7 +1,10 @@
 import { neo4jClient } from '../data/neo4jClient.js';
 
 function buildTreeFromNodes(dataNodes, inferences) {
-    console.log('Building tree from:', { dataNodes, inferences });
+    console.log('🔨 Building tree from:', { 
+        dataNodesCount: dataNodes.length,
+        inferencesCount: inferences.length
+    });
     
     // Primeiro, vamos organizar os nós por seu caminho completo
     const nodesByPath = new Map();
@@ -12,7 +15,9 @@ function buildTreeFromNodes(dataNodes, inferences) {
         const root = parts[0];
         
         // Ignorar nós que não são dos tipos principais
-        if (!['collar', 'survey', 'assay', 'lithology'].includes(root)) return;
+        if (!['collar', 'survey', 'assay', 'lithology'].includes(root)) {
+            return;
+        }
         
         // Ignorar subnodes (stats, distribution)
         if (parts[parts.length - 1] === 'stats' || parts[parts.length - 1] === 'distribution') return;

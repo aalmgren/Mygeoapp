@@ -2,11 +2,12 @@ import { applyInferencesOverlay } from './inferencesOverlay.js';
 
 // Initialize tree renderer (layout, group, zoom) and expose a draw method
 export function initTreeRender({ svg, tooltip, margin, width, height }) {
-  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+  // Centralizar o conteúdo
+  const g = svg.append('g').attr('transform', `translate(${width/2},${50})`);
 
-  // zoom/pan
+  // zoom/pan com centralização automática
   const zoom = d3.zoom()
-    .scaleExtent([0.5, 2])
+    .scaleExtent([0.3, 3])
     .on('zoom', (event) => {
       g.attr('transform', event.transform);
     });
@@ -14,9 +15,9 @@ export function initTreeRender({ svg, tooltip, margin, width, height }) {
 
   const treeLayout = d3
     .tree()
-    .size([width - margin.left - margin.right, height - margin.top - margin.bottom])
-    .separation((a, b) => (a.parent === b.parent ? 3 : 4.5))
-    .nodeSize([40, 100]);
+    .size([width * 0.9, height * 0.7])
+    .separation((a, b) => (a.parent === b.parent ? 1.2 : 2))
+    .nodeSize([25, 80]);
 
   function curvedPath(d) {
     const x0 = d.source.x,
@@ -34,7 +35,7 @@ export function initTreeRender({ svg, tooltip, margin, width, height }) {
     return `M${source.x},${source.y}A${dr},${dr} 0 0,1 ${target.x},${target.y}`;
   }
 
-  function draw({ visibleNodes, contextData }) {
+  function draw({ visibleNodes, currentNodes, inferenceNodes, readyForInferences }) {
     const hierarchy = d3.hierarchy(visibleNodes[0].data);
     const tree = treeLayout(hierarchy);
 
@@ -50,16 +51,23 @@ export function initTreeRender({ svg, tooltip, margin, width, height }) {
       return false;
     }
 
-    let currentNodes = tree.descendants().filter((d) => {
+    let treeNodes = tree.descendants().filter((d) => {
       const isVisible = visibleSet.has(d.data);
       return isVisible || isAncestorOfVisible(d);
     });
 
     // Apply special inference overlay (adds nodes/links)
-    applyInferencesOverlay({ g, currentNodes, contextData, curvedLink });
+    applyInferencesOverlay({ 
+      g, 
+      currentNodes: treeNodes, 
+      visibleNodes, 
+      inferenceNodes: inferenceNodes || [],
+      curvedLink,
+      readyForInferences
+    });
 
-    const currentLinks = currentNodes
-      .filter((n) => n.parent && currentNodes.includes(n.parent))
+    const currentLinks = treeNodes
+      .filter((n) => n.parent && treeNodes.includes(n.parent))
       .map((n) => ({ source: n.parent, target: n }));
 
     // Links
@@ -89,7 +97,7 @@ export function initTreeRender({ svg, tooltip, margin, width, height }) {
       });
 
     // Nodes
-    const node = g.selectAll('.node').data(currentNodes, (d) => d.data.inference);
+    const node = g.selectAll('.node').data(treeNodes, (d) => d?.data?.inference || d?.data?.id || Math.random());
     const nodeEnter = node
       .enter()
       .append('g')
