@@ -3,15 +3,23 @@
 
 import { showClusterMap } from '../interactions/clusterMap.js';
 
+// 🔥 CACHE GLOBAL para evitar duplicação
+const createdInferenceNodes = new Map();
+const placedInferenceNodes = [];
+const createdLinks = new Set(); // Links já criados
+
 export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenceNodes, curvedLink, readyForInferences }) {
   if (!Array.isArray(currentNodes) || !Array.isArray(inferenceNodes)) {
     return;
   }
 
-  // Se não estiver pronto para mostrar inferências, limpar qualquer inferência existente e sair
+  // Se não estiver pronto para mostrar inferências, limpar tudo e resetar cache
   if (!readyForInferences) {
     g.selectAll('.inference-node').remove();
     g.selectAll('.inference-link').remove();
+    createdInferenceNodes.clear();
+    placedInferenceNodes.length = 0;
+    createdLinks.clear();
     return;
   }
 
@@ -21,9 +29,6 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
   const CARD_HEIGHT = 40;
   const MAX_ATTEMPTS = 50;
   const VERTICAL_SPACING = 120;
-
-  // Cache de inferências já criadas neste loop
-  const createdInferenceNodes = new Map();
 
   // Helper: find node by path
   const byPath = (path) => {
@@ -82,10 +87,6 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
     };
   }
 
-  // Track already placed inference nodes for collision detection
-  const placedInferenceNodes = [];
-
-
   // SIMPLIFICADO: 3 passes para resolver dependências
   // Pass 1: Inferências sem dependências de outras inferências
   // Pass 2: Inferências que dependem de Pass 1
@@ -97,8 +98,15 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
         return;
       }
 
-      // Pular se já foi criada
+      // Pular se já foi criada (verificar cache E DOM)
       if (createdInferenceNodes.has(inference.id)) {
+        return;
+      }
+      
+      // Verificar se já existe no DOM usando atributo data-inference-id
+      const existsInDOM = g.select(`[data-inference-id="${inference.id}"]`).size() > 0;
+      
+      if (existsInDOM) {
         return;
       }
 
@@ -237,7 +245,9 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
     const nodeGroup = g.append('g')
       .lower() // Move para trás dos nós de dados
       .attr('class', 'node inference-node')
-      .attr('transform', `translate(${position.x},${position.y})`);
+      .attr('data-inference-id', inference.id) // ID único para detecção
+      .attr('transform', `translate(${position.x},${position.y})`)
+      .datum(inferenceNode);
 
     // Add background rectangle
     nodeGroup.append('rect')
@@ -275,6 +285,9 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
     sourceNodes.forEach((sourceNode) => {
       if (!sourceNode || !sourceNode.x || !sourceNode.y) return;
 
+      const linkId = `${sourceNode.data.id}->${inference.id}`;
+      if (createdLinks.has(linkId)) return;
+
       g.append('path')
         .attr('class', 'inference-link')
         .attr('d', curvedLink(sourceNode, inferenceNode))
@@ -282,6 +295,8 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
         .transition()
         .duration(600)
         .style('opacity', 1);
+      
+      createdLinks.add(linkId);
     });
 
     // Add links to target nodes (other inferences)
@@ -296,6 +311,9 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
         
         if (!targetNode || !targetNode.x || !targetNode.y) return;
 
+        const linkId = `${inference.id}->${targetId}`;
+        if (createdLinks.has(linkId)) return;
+
         g.append('path')
           .attr('class', 'inference-link')
           .attr('d', curvedLink(inferenceNode, targetNode))
@@ -303,6 +321,8 @@ export function applyInferencesOverlay({ g, currentNodes, visibleNodes, inferenc
           .transition()
           .duration(600)
           .style('opacity', 1);
+        
+        createdLinks.add(linkId);
       });
     }
     }); // Fim do forEach
